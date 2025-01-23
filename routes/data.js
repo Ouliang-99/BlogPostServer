@@ -101,4 +101,37 @@ router.post("/posts", async (req, res) => {
   }
 });
 
+router.post("/signup", async (req, res) => {
+  const { name, username, email, password } = req.body;
+
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      return res.status(400).json({ success: false, error: authError.message });
+    }
+
+    const { data, error } = await supabase.from("users").insert([
+      {
+        id: authData.user.id,
+        name,
+        username,
+        email,
+        created_at: new Date(),
+      },
+    ]);
+
+    if (error) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
+    res.status(201).json({ success: true, data: authData.user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
