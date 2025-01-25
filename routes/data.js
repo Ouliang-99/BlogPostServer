@@ -134,4 +134,56 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const { data: loginData, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (loginError) {
+      return res.status(400).json({ error: loginError.message });
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (userError) {
+      return res.status(400).json({ error: userError.message });
+    }
+
+    res.status(200).json({ user: userData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+router.put("/update_user", async (req, res) => {
+  const { userId, updateData } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", userId);
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json({ data });
+  } catch (err) {
+    console.error("Error updating user:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
